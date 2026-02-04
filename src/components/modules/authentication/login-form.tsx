@@ -40,7 +40,6 @@ const LoginForm = ({
 }: LoginProps) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
   const {
     register,
     handleSubmit,
@@ -54,14 +53,28 @@ const LoginForm = ({
     try {
       const response = await api.post("/auth/login", data);
       const { token, user } = response.data;
+      // const token = response.data?.token;
+      // const user = response.data?.user;
+      // 🔒 Safety check
+      // if (!token || !user) {
+      //   toast.error("Invalid login response");
+      //   return;
+      // }
+
+      // // 🚫 Admin blocked
+      // if (user.role === "ADMIN") {
+      //   toast.error("Admin cannot login from here");
+      //   return;
+      // }
 
       loginHelper(token, user);
       toast.success("Login successful!");
-      if (user.role === "SELLER") {
-        router.push("/seller");
-      } else {
-        router.push("/");
-      }
+      // if (user.role === "SELLER") {
+      //   router.push("/");
+      // } else {
+      //   router.push("/");
+      // }
+      router.push("/");
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message);
