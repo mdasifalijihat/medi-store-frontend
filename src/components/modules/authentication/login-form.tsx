@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/lib/api";
-import { login as loginHelper } from "@/lib/auth";
+import { login, login as loginHelper } from "@/lib/auth";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -69,6 +69,8 @@ const LoginForm = ({
 
       loginHelper(token, user);
       toast.success("Login successful!");
+      login(token, user);
+      window.dispatchEvent(new Event("storage"));
       // if (user.role === "SELLER") {
       //   router.push("/");
       // } else {

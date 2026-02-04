@@ -11,12 +11,30 @@ export const logout = () => {
   localStorage.removeItem("user");
 };
 
+// export const getUser = (): User | null => {
+//   const user = localStorage.getItem("user");
+//   return user ? (JSON.parse(user) as User) : null;
+// };
+
+// export const getToken = (): string | null => localStorage.getItem("token");
+
 export const getUser = (): User | null => {
+  if (typeof window === "undefined") return null;
+
   const user = localStorage.getItem("user");
-  return user ? (JSON.parse(user) as User) : null;
+  if (!user || user === "undefined") return null;
+
+  try {
+    return JSON.parse(user) as User;
+  } catch {
+    return null;
+  }
 };
 
-export const getToken = (): string | null => localStorage.getItem("token");
+export const getToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+};
 
 export const signupSchema = z
   .object({
