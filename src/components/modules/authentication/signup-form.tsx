@@ -1,77 +1,119 @@
-import { cn } from "@/lib/utils";
+"use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { useState } from "react";
+import { api } from "@/lib/api"; // axios instance
+import { toast } from "react-hot-toast";
+import { SignupFormData, signupSchema } from "@/lib/auth";
 
 interface SignupProps {
   heading?: string;
-  logo: {
-    url: string;
-    src: string;
-    alt: string;
-    title?: string;
-  };
   buttonText?: string;
-  googleText?: string;
   signupText?: string;
-  signupUrl?: string;
   className?: string;
 }
 
 const SignupForm = ({
   heading = "Signup",
-  logo = {
-    url: "https://www.shadcnblocks.com",
-    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/shadcnblockscom-wordmark.svg",
-    alt: "logo",
-    title: "shadcnblocks.com",
-  },
   buttonText = "Create Account",
   signupText = "Already a user?",
   className,
 }: SignupProps) => {
+  const [loading, setLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+  });
+
+  const onSubmit = async (data: SignupFormData) => {
+    setLoading(true);
+    try {
+      await api.post("/auth/register", {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        role: data.role, // ✅ important
+      });
+      toast.success("Signup successful! Please login.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Signup failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className={cn("h-screen bg-muted", className)}>
       <div className="flex h-full items-center justify-center">
-        {/* Logo */}
         <div className="flex flex-col items-center gap-6 lg:justify-start">
-          <a href={logo.url}>
-            <img
-              src={logo.src}
-              alt={logo.alt}
-              title={logo.title}
-              className="h-10 dark:invert"
-            />
-          </a>
-          <div className="flex w-full max-w-sm min-w-sm flex-col items-center gap-y-4 rounded-md border border-muted bg-background px-6 py-8 shadow-md">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex w-full max-w-sm flex-col items-center gap-y-4 rounded-md border border-muted bg-background px-6 py-8 shadow-md"
+          >
             {heading && <h1 className="text-xl font-semibold">{heading}</h1>}
-            <Input
-              type="email"
-              placeholder="Email"
-              className="text-sm"
-              required
-            />
+
+            <Input type="text" placeholder="Name" {...register("name")} />
+            {errors.name && (
+              <p className="text-xs text-red-500">{errors.name.message}</p>
+            )}
+
+            <Input type="email" placeholder="Email" {...register("email")} />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email.message}</p>
+            )}
+
             <Input
               type="password"
               placeholder="Password"
-              className="text-sm"
-              required
+              {...register("password")}
             />
+            {errors.password && (
+              <p className="text-xs text-red-500">{errors.password.message}</p>
+            )}
+
             <Input
               type="password"
               placeholder="Confirm Password"
-              className="text-sm"
-              required
+              {...register("confirmPassword")}
             />
-            <Button type="submit" className="w-full">
-              {buttonText}
+            {errors.confirmPassword && (
+              <p className="text-xs text-red-500">
+                {errors.confirmPassword.message}
+              </p>
+            )}
+
+            <select
+              {...register("role")}
+              className="w-full border rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Select role</option>
+              <option value="CUSTOMER">Customer</option>
+              <option value="SELLER">Seller</option>
+            </select>
+            {errors.role && (
+              <p className="text-xs text-red-500">{errors.role.message}</p>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Creating..." : buttonText}
             </Button>
-          </div>
+          </form>
+
           <div className="flex justify-center gap-1 text-sm text-muted-foreground">
             <p>{signupText}</p>
             <Link
-              href={'/login'}
+              href="/login"
               className="font-medium text-primary hover:underline"
             >
               Login

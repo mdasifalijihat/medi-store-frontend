@@ -7,20 +7,15 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { api } from "@/lib/api"; 
+import { api } from "@/lib/api";
 import { login as loginHelper } from "@/lib/auth";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
+/* -------------------- props -------------------- */
 interface LoginProps {
   heading?: string;
-  logo: {
-    url: string;
-    src: string;
-    alt: string;
-    title?: string;
-    className?: string;
-  };
   buttonText?: string;
   signupText?: string;
   signupUrl?: string;
@@ -37,14 +32,14 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginForm = ({
-  heading = "Login",
-  
+  heading = "Login Form",
   buttonText = "Login",
   signupText = "Need an account?",
   signupUrl = "/signup",
   className,
 }: LoginProps) => {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -60,61 +55,82 @@ const LoginForm = ({
       const response = await api.post("/auth/login", data);
       const { token, user } = response.data;
 
-      loginHelper(token, user); 
-      toast.success("Login successful!"); 
-    } catch (err: any) {
-      // Backend error handling
-      const msg = err.response?.data?.message || "Login failed. Try again!";
-      toast.error(msg);
+      loginHelper(token, user);
+      toast.success("Login successful!");
+      if (user.role === "SELLER") {
+        router.push("/seller");
+      } else {
+        router.push("/");
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Login failed. Try again!");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <section className={cn("h-screen bg-muted", className)}>
-      <div className="flex h-full items-center justify-center">
-        <div className="flex flex-col items-center gap-6 lg:justify-start">          
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex w-full max-w-sm min-w-sm flex-col items-center gap-y-4 rounded-md border border-muted bg-background px-6 py-8 shadow-md"
-          >
-            {heading && <h1 className="text-xl font-semibold">{heading}</h1>}
+    <section
+      className={cn(
+        "flex min-h-screen items-center justify-center bg-muted px-4",
+        className,
+      )}
+    >
+      <div className="w-full max-w-md rounded-2xl border bg-background p-8 shadow-lg">
+        {/* Heading only */}
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">{heading}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Please login to continue
+          </p>
+        </div>
 
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
             <Input
               type="email"
-              placeholder="Email"
-              className="text-sm"
+              placeholder="Email address"
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
+              <p className="mt-1 text-xs text-red-500">
+                {errors.email.message}
+              </p>
             )}
+          </div>
 
+          <div>
             <Input
               type="password"
               placeholder="Password"
-              className="text-sm"
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
+              <p className="mt-1 text-xs text-red-500">
+                {errors.password.message}
+              </p>
             )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Logging in..." : buttonText}
-            </Button>
-          </form>
-
-          <div className="flex justify-center gap-1 text-sm text-muted-foreground">
-            <p>{signupText}</p>
-            <Link
-              href={signupUrl}
-              className="font-medium text-primary hover:underline"
-            >
-              Sign up
-            </Link>
           </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Logging in..." : buttonText}
+          </Button>
+        </form>
+
+        {/* Footer */}
+        <div className="mt-6 text-center text-sm text-muted-foreground">
+          {signupText}{" "}
+          <Link
+            href={signupUrl}
+            className="font-medium text-primary hover:underline"
+          >
+            Sign up
+          </Link>
         </div>
       </div>
     </section>

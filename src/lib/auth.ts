@@ -1,5 +1,5 @@
 import { User } from "../../types";
-
+import { z } from "zod";
 
 export const login = (token: string, user: User) => {
   localStorage.setItem("token", token);
@@ -17,3 +17,22 @@ export const getUser = (): User | null => {
 };
 
 export const getToken = (): string | null => localStorage.getItem("token");
+
+export const signupSchema = z
+  .object({
+    name: z.string().min(2, { message: "Name is required" }),
+    email: z.string().email({ message: "Invalid email" }),
+    password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters" }),
+    confirmPassword: z.string().min(6),
+    role: z.enum(["CUSTOMER", "SELLER"], {
+      message: "Role is required",
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type SignupFormData = z.infer<typeof signupSchema>;
